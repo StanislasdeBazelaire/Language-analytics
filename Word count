@@ -1,0 +1,28 @@
+setwd("C:/Users/stanislas_bazelaire/Documents/Data science/ALD investor calls")
+install.packages("tm")
+install.packages("SnowballC")
+install.packages("pdftools")
+install.packages("wordcloud")
+install.packages("RColorBrewer")
+install.packages("xlsx")
+library(tm)
+library(SnowballC)
+library(pdftools)
+library(RColorBrewer)
+library(xlsx)
+files<-list.files(pattern="pdf$")
+qcalls<-lapply(files,pdf_text)
+#A corpus is a database for text
+corp<-VCorpus(VectorSource(qcalls))
+#A term-document matrix stores counts of terms for each document
+qcalls.tdm <- TermDocumentMatrix(corp,control=list(removePunctuation=TRUE,stopwords=TRUE,tolower=TRUE,stemming=TRUE,removeNumbers=TRUE,bounds=list(global=c(3,Inf))))
+#v1:occurence by word by document
+##findFreqTerms finds frequent terms in a term-document matrix
+ft<-findFreqTerms(qcalls.tdm,lowfreq=10,highfreq=Inf)
+as.matrix(qcalls.tdm[ft,])
+#v2:ranking by word for all docs
+ft.tdm <- as.matrix(qcalls.tdm[ft,])
+colnames(ft.tdm)<-c("Q2 2017","Q4 2017","Q1 2018","Q2 2018","Q3 2018","Q4 2018","Q1 2019","Q2 2019","Q3 2019","Q4 2019")
+sort(apply(ft.tdm,1,sum),decreasing=TRUE)
+##Export v2
+write.xlsx(ft.tdm,"C:/Users/stanislas_bazelaire/Documents/Data science/ALD investor calls/ALD count words q calls.xlsx")

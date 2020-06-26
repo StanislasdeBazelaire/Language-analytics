@@ -1,0 +1,40 @@
+install.packages("tidyverse")
+install.packages("tidytext")
+
+library(tidyverse)
+library(tidytext)
+library(glue)
+library(stringr)
+
+setwd("C:/Users/Stanislas/Datascience/NLP/Input")
+
+files <- list.files("../input")
+
+GetSentiment <- function(file){
+  # get the file
+  fileName <- glue("../input/", file, sep = "")
+  # get rid of any sneaky trailing spaces
+  fileName <- trimws(fileName)
+  
+  # read in the new file
+  fileText <- glue(read_file(fileName))
+  # remove any dollar signs (they're special characters in R)
+  fileText <- gsub("\\$", "", fileText) 
+  
+  # tokenize
+  tokens <- data_frame(text = fileText) %>% unnest_tokens(word, text)
+  
+  # get the sentiment from the first text: 
+  sentiment <- tokens %>%
+    inner_join(get_sentiments("bing")) %>% # pull out only sentimen words
+    count(sentiment) %>% # count the # of positive & negative words
+    spread(sentiment, n, fill = 0) %>% # made data wide rather than narrow
+    mutate(positive.sentiment = positive/(positive+negative)) %>% # # of positive words - # of negative owrds
+    mutate(file = file) 
+  # return our sentiment dataframe
+  return(sentiment)
+}
+
+# get the sentiments for each file in our datset
+for(i in 1:length(files)){print(GetSentiment(files[i]))}
+
